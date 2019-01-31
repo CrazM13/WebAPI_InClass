@@ -37,34 +37,44 @@ app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 
 // Route To Index
-router.get('/', function (req, res) {
-	//res.sendFile(path.join(__dirname, '/index.html'));
-	var title = "Welcome To The Game App Page";
-	res.render('index', {
-		title: title
-	});
-});
-
-// Route To The Entries
-// router.get('/entries', function (req, res) {
-// 	res.sendFile(path.join(__dirname, '/entries.html'));
+// router.get('/', function (req, res) {
+// 	res.render('index');
 // });
 
-app.get('/getdata', function(req, res) {
-	console.log("REQUEST MADE FROM FETCH");
+// Route To The Entries
+router.get('/entries', function (req, res) {
+	res.render('gameentries/addgame');
+});
+
+// Route To The Log In
+router.get('/login', function (req, res) {
+	res.render('login');
+});
+
+app.get('/', function(req, res) {
 	Entry.find({}).then(function(entries) {
-		res.send({entries:entries});
+		//res.send({entries:entries});
+		res.render('index', {
+			entries:entries
+		});
 	});
 });
 
 // Post From Form On Index
-app.post('/', function(req, res) {
-	console.log(req.body);
+app.post('/addgame', function(req, res) {
 	var newEntry = {
 		title: req.body.title,
 		genre: req.body.genre
 	};
 	new Entry(newEntry).save().then(function(entry) {
+		res.redirect('/');
+	});
+});
+
+// Delete Game Entry
+app.post('/:id', function(req, res) {
+	Entry.remove({_id:req.params.id}).then(function () {
+		//res.flash("Game Removed");
 		res.redirect('/');
 	});
 });
