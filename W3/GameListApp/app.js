@@ -46,6 +46,30 @@ router.get('/entries', function (req, res) {
 	res.render('gameentries/addgame');
 });
 
+// Route To Edit Entries
+router.get('/gameentries/edit/:id', function (req, res) {
+	
+	Entry.findOne({
+		_id: req.params.id
+	}).then(function (entry) {
+		res.render('gameentries/editgame', {entry: entry});
+	});
+});
+
+// Route To Put Edit
+router.put('/editgame/:id', function(req, res) {
+	Entry.findOne({
+		_id: req.params.id
+	}).then(function(entry) {
+		entry.title = req.body.title;
+		entry.genre = req.body.genre;
+
+		entry.save().then(function(idea) {
+			res.redirect('/');
+		});
+	});
+});
+
 // Route To The Log In
 router.get('/login', function (req, res) {
 	res.render('login');
