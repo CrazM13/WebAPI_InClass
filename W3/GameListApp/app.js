@@ -1,13 +1,25 @@
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
+const flash = require('connect-flash');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const exphbs  = require('express-handlebars');
+const methodOverride = require('method-override');
+
+const {ensureAuthenticated} = require('./helpers/auth');
 
 const app = express();
 const router = express.Router();
 
 const port = 5000;
+
+// Configuers Routes
+const users = require('./routes/users');
+
+// PassportJS Config Route
+require('./config/passport')(passport);
 
 // - Get Rid Of Warning For Mongoose -|
 //mongoose.Promise = global.Promise;//|
@@ -36,13 +48,37 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 
+// Express Session
+app.use(session({
+	secret: "secret",
+	resave: true,
+	saveUninitialized: true
+}));
+
+// Setup Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Confiure Flash
+// app.use(flash());
+// app.use(function(req, res) {
+// 	res.locals.success_msg = req.flash('success_msg');
+// 	res.locals.error_msg = req.flash('error_msg');
+// 	res.locals.error = req.flash('error');
+// 	res.locals.user = req.user || null;
+// 	next();
+// });
+
+// Method Override Code
+app.use(methodOverride('_method'));
+
 // Route To Index
 // router.get('/', function (req, res) {
 // 	res.render('index');
 // });
 
 // Route To The Entries
-router.get('/entries', function (req, res) {
+router.get('/entries', ensureAuthenticated, function (req, res) {
 	res.render('gameentries/addgame');
 });
 
@@ -75,7 +111,14 @@ router.get('/login', function (req, res) {
 	res.render('login');
 });
 
-app.get('/', function(req, res) {
+router.post('/login', function (req, res, next) {
+	passport.authenticate('local', {
+		successRedirect: '/',
+		failureRedirect: '/login'
+	})(req, res, next);
+});
+
+app.get('/', ensureAuthenticated, function(req, res) {
 	Entry.find({}).then(function(entries) {
 		//res.send({entries:entries});
 		res.render('index', {
@@ -96,7 +139,7 @@ app.post('/addgame', function(req, res) {
 });
 
 // Delete Game Entry
-app.post('/:id', function(req, res) {
+app.delete('/:id', function(req, res) {
 	Entry.remove({_id:req.params.id}).then(function () {
 		//res.flash("Game Removed");
 		res.redirect('/');
@@ -106,6 +149,7 @@ app.post('/:id', function(req, res) {
 // Routes For Paths
 app.use(express.static(__dirname + '/views'));
 app.use(express.static(__dirname + '/scripts'));
+app.use('/users', users);
 app.use('/', router);
 // Start Server
 app.listen(port, function() {
