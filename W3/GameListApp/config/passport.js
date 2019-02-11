@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const User = mongoose.model('Users');
 
 module.exports = function(passport) {
-    passport.use(new LocalStrategy({usernamefield: 'email'}, function(email, password, done) {
+    passport.use(new LocalStrategy({usernameField: 'email'}, function(email, password, done) {
         User.findOne({
             email: email
         }).then(function(user) {
