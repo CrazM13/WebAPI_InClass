@@ -1,0 +1,33 @@
+<div class="jumbotron text-center">
+	<h1>Welcome To The Game App Page</h1>
+	<p>These are the current favourite games!</p>
+	<br />
+	<br />
+
+	{{#each users}}
+	<div class='card card-body text-left'>
+		<button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#collapse{{id}}" aria-expanded="false" aria-controls="collapse{{id}}">
+			<span class="font-weight-bold">{{name}}</span>
+		</button>
+		<div class="collapse" id="collapse{{id}}">
+			<div class="card card-body">
+				<p>
+					User Name: {{name}}
+				</p>
+				<p>
+					Date Signed Up: {{date}}
+				</p>
+				<!--
+				<a class="btn btn-dark mb-3" href="/gameentries/edit/{{id}}">Edit</a>
+				<form action="/{{id}}?_method=Delete" method="POST">
+					<input type="hidden" name="_method" value="DELETE" />
+					<input class="btn btn-danger" type="submit" value="Delete" />
+				</form>
+				-->
+			</div>
+		</div>
+	</div>
+	<br />
+	{{else}}
+	{{/each}}
+</div>

@@ -38,6 +38,9 @@ mongoose.connect("mongodb://localhost:27017/gameentries", {
 require('./models/Entry');
 var Entry = mongoose.model('Entries');
 
+require('./models/Users');
+var User = mongoose.model('Users');
+
 // Use Template Engine
 app.engine('handlebars', exphbs({
 	defaultLayout: 'main'
@@ -79,7 +82,9 @@ app.use(methodOverride('_method'));
 
 // Route To The Entries
 router.get('/entries', ensureAuthenticated, function (req, res) {
-	res.render('gameentries/addgame');
+	res.render('gameentries/addgame', {
+		user: req.user
+	});
 });
 
 // Route To Edit Entries
@@ -88,7 +93,7 @@ router.get('/gameentries/edit/:id', function (req, res) {
 	Entry.findOne({
 		_id: req.params.id
 	}).then(function (entry) {
-		res.render('gameentries/editgame', {entry: entry});
+		res.render('gameentries/editgame', {entry: entry, user: req.user});
 	});
 });
 
@@ -118,11 +123,29 @@ router.post('/login', function (req, res, next) {
 	})(req, res, next);
 });
 
+router.get('/logout', function(req, res) {
+	req.logout();
+	res.redirect('/login');
+});
+
+// Index Route
 app.get('/', ensureAuthenticated, function(req, res) {
-	Entry.find({}).then(function(entries) {
-		//res.send({entries:entries});
+	Entry.find({user: req.user.id}).then(function(entries) {
+
 		res.render('index', {
+			user: req.user,
 			entries:entries
+		});
+	});
+});
+
+// Gamers Route
+app.get('/gamers', function(req, res) {
+	User.find({}).then(function(users) {
+
+		res.render('gamers', {
+			user: req.user,
+			users:users
 		});
 	});
 });
@@ -131,7 +154,8 @@ app.get('/', ensureAuthenticated, function(req, res) {
 app.post('/addgame', function(req, res) {
 	var newEntry = {
 		title: req.body.title,
-		genre: req.body.genre
+		genre: req.body.genre,
+		user: req.user.id
 	};
 	new Entry(newEntry).save().then(function(entry) {
 		res.redirect('/');
