@@ -13,10 +13,12 @@ const {ensureAuthenticated} = require('./helpers/auth');
 const app = express();
 const router = express.Router();
 
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 // Configuers Routes
 const users = require('./routes/users');
+
+const db = require('./config/database');
 
 // PassportJS Config Route
 require('./config/passport')(passport);
@@ -26,7 +28,7 @@ require('./config/passport')(passport);
 // -----------------------------------|
 
 // Connect To MongoDB Using Mongoose
-mongoose.connect("mongodb://localhost:27017/gameentries", {
+mongoose.connect(db.mongoURI, {
 	useMongoClient:true
 }).then(function () {
 	console.log("MongoDB Connected");
@@ -63,28 +65,22 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Confiure Flash
-// app.use(flash());
-// app.use(function(req, res) {
-// 	res.locals.success_msg = req.flash('success_msg');
-// 	res.locals.error_msg = req.flash('error_msg');
-// 	res.locals.error = req.flash('error');
-// 	res.locals.user = req.user || null;
-// 	next();
-// });
+app.use(flash());
+// Global Variables
+app.use(function(req, res, next) {
+	res.locals.success_msg = req.flash('success_msg');
+	res.locals.error_msg = req.flash('error_msg');
+	res.locals.error = req.flash('error');
+	res.locals.user = req.user || null;
+	next();
+});
 
 // Method Override Code
 app.use(methodOverride('_method'));
 
-// Route To Index
-// router.get('/', function (req, res) {
-// 	res.render('index');
-// });
-
 // Route To The Entries
 router.get('/entries', ensureAuthenticated, function (req, res) {
-	res.render('gameentries/addgame', {
-		user: req.user
-	});
+	res.render('gameentries/addgame');
 });
 
 // Route To Edit Entries
@@ -93,7 +89,7 @@ router.get('/gameentries/edit/:id', function (req, res) {
 	Entry.findOne({
 		_id: req.params.id
 	}).then(function (entry) {
-		res.render('gameentries/editgame', {entry: entry, user: req.user});
+		res.render('gameentries/editgame', {entry: entry});
 	});
 });
 
@@ -106,10 +102,18 @@ router.put('/editgame/:id', function(req, res) {
 		entry.genre = req.body.genre;
 
 		entry.save().then(function(idea) {
-			res.redirect('/');
+			res.redirect('/gamers');
 		});
 	});
 });
+
+router.get('/userlist/:id', function(req, res) {
+	Entry.find({
+		user: req.params.id
+	}).then(function (entries) {
+		res.render('userlist', {entries: entries});
+	});
+})
 
 // Route To The Log In
 router.get('/login', function (req, res) {
@@ -118,35 +122,31 @@ router.get('/login', function (req, res) {
 
 router.post('/login', function (req, res, next) {
 	passport.authenticate('local', {
-		successRedirect: '/',
-		failureRedirect: '/login'
+		successRedirect: '/gamers',
+		failureRedirect: '/login',
+		failureFlash: true
 	})(req, res, next);
 });
 
 router.get('/logout', function(req, res) {
 	req.logout();
+	req.flash('success_msg', "Successfully Logged Out!");
 	res.redirect('/login');
 });
 
-// Index Route
-app.get('/', ensureAuthenticated, function(req, res) {
+// Gamers Route
+app.get('/gamers', ensureAuthenticated, function(req, res) {
 	Entry.find({user: req.user.id}).then(function(entries) {
-
 		res.render('index', {
-			user: req.user,
 			entries:entries
 		});
 	});
 });
 
-// Gamers Route
-app.get('/gamers', function(req, res) {
+// Index Route
+app.get('/', function(req, res) {
 	User.find({}).then(function(users) {
-
-		res.render('gamers', {
-			user: req.user,
-			users:users
-		});
+		res.render('gamers', {users: users});
 	});
 });
 
@@ -158,15 +158,15 @@ app.post('/addgame', function(req, res) {
 		user: req.user.id
 	};
 	new Entry(newEntry).save().then(function(entry) {
-		res.redirect('/');
+		res.redirect('/gamers');
 	});
 });
 
 // Delete Game Entry
 app.delete('/:id', function(req, res) {
 	Entry.remove({_id:req.params.id}).then(function () {
-		//res.flash("Game Removed");
-		res.redirect('/');
+		req.flash('success_msg', "Game Removed");
+		res.redirect('/gamers');
 	});
 });
 

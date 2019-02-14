@@ -20,7 +20,7 @@ router.post('/register', function(req, res) {
 	if (req.body.password.length < 4) errors.push({text:"Password must be at least 4 characters"});
 
 	if (errors.length > 0) {
-		//req.flash("error_msg", "We have Errors");
+		req.flash("error_msg", "We have Errors");
 		res.render('users/register', {
 			errors: errors,
 			name: req.body.name,
@@ -31,7 +31,7 @@ router.post('/register', function(req, res) {
 	} else {
 		User.findOne({email: req.body.email}).then(function(user) {
 			if (user) {
-				// #ADD_FLASH_MSG
+				req.flash('error_msg', "Email Already Exists!");
 				res.redirect('/users/register');
 			} else {
 				var newUser = new User({
@@ -46,7 +46,7 @@ router.post('/register', function(req, res) {
 						newUser.password = hash;
 
 						newUser.save().then(function(user) {
-							//#ADD_FLASH_MESSAGE
+							req.flash('success_msg', "Successfully Registered");
 						 	res.redirect('/login');
 						}).catch(function(err) {
 							console.log(err);

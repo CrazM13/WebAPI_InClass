@@ -1,6 +1,6 @@
 <div class="jumbotron text-center">
 	<h1>Welcome To The Game App Page</h1>
-	<p>These are the current favourite games!</p>
+	<p>These are their favourite games!</p>
 	<br />
 	<br />
 
@@ -20,11 +20,6 @@
 				<p>
 					Data Added: {{date}}
 				</p>
-				<a class="btn btn-dark mb-3" href="/gameentries/edit/{{id}}">Edit</a>
-				<form action="/{{id}}?_method=Delete" method="POST">
-					<input type="hidden" name="_method" value="DELETE" />
-					<input class="btn btn-danger" type="submit" value="Delete" />
-				</form>
 			</div>
 		</div>
 	</div>
